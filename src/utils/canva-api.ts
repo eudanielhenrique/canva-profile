@@ -1,22 +1,49 @@
 import { CanvaProfileResponse } from '../types/canva';
 
-export async function fetchCanvaProfile(username: string): Promise<CanvaProfileResponse> {
+interface CanvaApiResponse {
+  profile: CanvaProfileResponse;
+  rawResponse?: string;
+}
+
+export async function fetchCanvaProfile(username: string): Promise<CanvaApiResponse> {
   try {
-    const response = await fetch(`/api/canva-profile/${username}`);
+    // Usar uma URL clara e bem formatada
+    const apiUrl = `/api/canva-profile/${encodeURIComponent(username)}`;
+    console.log(`Fazendo requisição para: ${apiUrl}`);
+    
+    // Fazer requisição para nossa API route local
+    const response = await fetch(apiUrl);
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.error || `Erro ao buscar perfil: ${response.status}`);
+      const errorText = await response.text();
+      let errorMessage = `Erro ao buscar perfil: ${response.status}`;
+      
+      try {
+        // Tenta extrair mensagem de erro se for JSON
+        const errorData = JSON.parse(errorText);
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // Se não for JSON, usa o texto bruto
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
     
+    // Parse da resposta JSON
     const data = await response.json();
     
-    // Verificar se temos o ID correto para debug
-    console.log(`Perfil recebido para ${username}:`, data);
+    // Valida que temos os dados necessários
+    if (!data.profile || !data.profile.id) {
+      throw new Error('Dados do perfil inválidos ou incompletos');
+    }
     
+    console.log(`Perfil carregado: ${data.profile.displayName} (${data.profile.id})`);
     return data;
   } catch (error) {
-    console.error('Erro detalhado:', error);
+    console.error('Erro ao buscar perfil:', error);
     throw error;
   }
 }

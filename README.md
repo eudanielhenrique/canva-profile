@@ -70,6 +70,7 @@ src/
 - **Acessibilidade**: Implementa práticas de acessibilidade, como texto alternativo para imagens
 - **Estado de Carregamento**: Exibe um esqueleto de carregamento (skeleton) durante as requisições
 - **Tratamento de Erros**: Tratamento adequado quando um perfil não é encontrado
+- **Dados reais**: A aplicação extrai informações reais de perfis do Canva, incluindo o ID único de cada perfil
 
 ## 📱 Compatibilidade
 
@@ -88,6 +89,58 @@ Esta aplicação está configurada para fácil deploy na Vercel. Para realizar o
 2. Importe o repositório na Vercel
 3. A Vercel detectará automaticamente as configurações do Next.js e realizará o deploy
 
+## 📝 Notas Técnicas
+
+### Sobre os IDs dos perfis
+A aplicação extrai o ID único de cada perfil diretamente da resposta JSON da API do Canva. 
+A resposta da API inclui um prefixo `")]}'while(1);</x>//"` que é removido antes do parsing JSON, mantendo assim o ID 
+original (ex: "BACa965hCfg" para o perfil "phdanielhenrique").
+
+### Como a aplicação acessa a API do Canva
+Para contornar as restrições de CORS, a aplicação utiliza uma API route do Next.js como proxy, que tenta acessar a API do Canva através de um serviço de proxy CORS. Isso permite buscar dados reais de perfis públicos sempre que possível.
+
+Em ambientes onde o acesso direto ou via proxy não é possível (devido a restrições severas de rede, firewall, políticas de segurança etc.), a aplicação utiliza dados de demonstração para alguns perfis conhecidos, como "phdanielhenrique" e "carolinesanches", mantendo exatamente o formato real incluindo os IDs autênticos.
+
+**Nota**: As restrições de acesso à API do Canva são bastante severas e podem variar conforme atualizações de segurança. Esta aplicação está configurada para buscar dados reais quando possível, mas também manter a funcionalidade mesmo em ambientes restritos.
+
+### Formato da resposta
+Um exemplo do formato de resposta da API do Canva para referência:
+```json
+{
+  "id": "BAETOYGsa5A",
+  "brandname": "carolinesanches",
+  "displayName": "Caroline Sanches",
+  "personal": false,
+  "contributor": true,
+  "layoutContributor": false,
+  "thirdParty": false,
+  "creationDate": 1610645439000,
+  "status": "A",
+  "archived": false,
+  "externalBrandLinks": [],
+  "allowedFrameAncestors": [],
+  "avatar": {
+    "version": 0,
+    "sizes": {
+      "50": {
+        "size": 50,
+        "width": 50,
+        "height": 50,
+        "url": "https://static.canva.com/images/default_avatar_50.png"
+      },
+      "200": {
+        "size": 200,
+        "width": 200,
+        "height": 200,
+        "url": "https://static.canva.com/images/default_avatar_200.png"
+      }
+    },
+    "status": "SUCCEEDED",
+    "isDefault": true
+  }
+}
+```
+
 ## 🤝 Contribuindo
 
 Contribuições são bem-vindas! Sinta-se à vontade para abrir issues e pull requests.
@@ -99,6 +152,5 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## ✨ Agradecimentos
 
 Desenvolvido com ❤️ por [Daniel H](https://www.canva.com/p/phdanielhenrique/)
-```
 
 Aproveite a aplicação!

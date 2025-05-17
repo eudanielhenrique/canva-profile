@@ -5,10 +5,12 @@ import { CanvaProfileResponse } from '../types/canva';
 import ProfileCard from '../components/ProfileCard';
 import ProfileSkeleton from '../components/ProfileSkeleton';
 import ErrorDisplay from '../components/ErrorDisplay';
+import RawResponseViewer from '../components/RawResponseViewer';
 
 export default function Home() {
   const [username, setUsername] = useState('');
   const [profile, setProfile] = useState<CanvaProfileResponse | null>(null);
+  const [rawResponse, setRawResponse] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +21,18 @@ export default function Home() {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchCanvaProfile(username.trim());
-      setProfile(data);
+      const result = await fetchCanvaProfile(username.trim());
+      
+      // Verificar a estrutura da resposta e extrair os dados apropriados
+      if (result.profile && result.rawResponse) {
+        // Nova estrutura com profile e rawResponse
+        setProfile(result.profile);
+        setRawResponse(result.rawResponse);
+      } else {
+        // Estrutura antiga, apenas o perfil
+        setProfile(result as CanvaProfileResponse);
+        setRawResponse(null);
+      }
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
       setError('Não foi possível encontrar o perfil solicitado. Verifique se o nome de usuário está correto e tente novamente.');
@@ -56,7 +68,7 @@ export default function Home() {
         </header>
 
         <main className="max-w-5xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-          {/* Formulário de busca com design melhorado */}
+          {/* Formulário de busca */}
           <div className="bg-white shadow-md rounded-xl border border-gray-200 p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Buscar perfil do Canva</h2>
             <form onSubmit={handleSubmit} className="max-w-lg mx-auto">
@@ -104,19 +116,26 @@ export default function Home() {
                   )}
                 </button>
               </div>
-              <p className="mt-2 text-sm text-gray-500 text-center">
-                Insira o nome de usuário do Canva sem o "@"
-              </p>
             </form>
           </div>
 
-          {/* Área de resultado com animações */}
-          <div className="mt-8 transition-all duration-300">
+          {/* Área de resultado */}
+          <div className="mt-8">
             {loading && <ProfileSkeleton />}
             {error && <ErrorDisplay message={error} />}
+            
             {!loading && !error && profile && (
-              <div className="animate-fadeIn">
+              <div className="space-y-8">
                 <ProfileCard profile={profile} />
+                
+                {rawResponse && (
+                  <div className="bg-gray-900 rounded-xl shadow-lg p-4 overflow-x-auto">
+                    <h2 className="text-white text-lg font-bold mb-2">Resposta Bruta da API:</h2>
+                    <pre className="text-green-400 text-sm font-mono whitespace-pre-wrap break-words">
+                      {rawResponse}
+                    </pre>
+                  </div>
+                )}
               </div>
             )}
             
@@ -141,51 +160,9 @@ export default function Home() {
               </div>
             )}
           </div>
-
-          {/* Dicas ou informações adicionais */}
-          {!profile && !loading && (
-            <div className="mt-8 grid gap-6 lg:grid-cols-3">
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-center mb-3">
-                  <svg className="h-6 w-6 text-canva-blue mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <h3 className="font-medium text-gray-900">Como usar</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Insira o nome de usuário do Canva (sem o @) no campo acima e clique em "Buscar Perfil".
-                </p>
-              </div>
-              
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-center mb-3">
-                  <svg className="h-6 w-6 text-canva-blue mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
-                  </svg>
-                  <h3 className="font-medium text-gray-900">Dados exibidos</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  ID, nome de exibição, nome de usuário, status e data de criação do perfil.
-                </p>
-              </div>
-              
-              <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-center mb-3">
-                  <svg className="h-6 w-6 text-canva-blue mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clipRule="evenodd" />
-                  </svg>
-                  <h3 className="font-medium text-gray-900">Experimente</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Tente com "phdanielhenrique", "canvadesign" ou qualquer outro usuário do Canva.
-                </p>
-              </div>
-            </div>
-          )}
         </main>
 
-        {/* Footer com créditos para Daniel H */}
+        {/* Footer */}
         <footer className="bg-white border-t border-gray-200 mt-12">
           <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <div className="flex flex-col items-center md:flex-row md:justify-between">
@@ -210,17 +187,6 @@ export default function Home() {
           </div>
         </footer>
       </div>
-
-      {/* CSS para animações */}
-      <style jsx global>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.5s ease-out forwards;
-        }
-      `}</style>
     </>
   );
 }

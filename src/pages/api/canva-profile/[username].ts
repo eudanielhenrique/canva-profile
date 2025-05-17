@@ -1,10 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getMockProfile } from '../../../data/mock-profiles';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { username } = req.query;
   
   if (!username || Array.isArray(username)) {
@@ -12,25 +8,53 @@ export default async function handler(
   }
 
   try {
-    // Usar dados mockados como solução temporária
-    const profileData = getMockProfile(username as string);
+    console.log(`Buscando perfil do Canva para: ${username}`);
     
-    // Para 'phdanielhenrique', garantir que o ID seja exatamente 'BACa965hCfg'
-    if (username === 'phdanielhenrique') {
-      profileData.id = 'BACa965hCfg';
+    // Fazer requisição direta para o endpoint do Canva (sem proxy)
+    const response = await fetch(`https://www.canva.com/_ajax/profile/names/brands/${username}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+      }
+    });
+
+    if (!response.ok) {
+      console.error(`Erro na API do Canva: ${response.status} ${response.statusText}`);
+      return res.status(response.status).json({ 
+        error: `Erro ao buscar perfil: ${response.status}`,
+        message: `A API do Canva retornou: ${response.statusText}`
+      });
     }
     
-    // Pequeno delay para simular uma chamada de API real
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Obter o texto da resposta
+    const text = await response.text();
+    console.log(`Resposta recebida (primeiros 100 chars): ${text.substring(0, 100)}`);
     
-    // Log para debug
-    console.log(`Retornando perfil para ${username} com ID: ${profileData.id}`);
+    // Remover o prefixo de segurança exatamente como mencionado
+    const cleaned = text.replace(/^\)\]\}',\nwhile\(1\);<\/x>\/\//, '');
     
-    return res.status(200).json(profileData);
+    try {
+      // Fazer parse do JSON limpo
+      const data = JSON.parse(cleaned);
+      console.log(`Perfil encontrado para ${username} com ID: ${data.id}`);
+      
+      // Retornar os dados e a resposta bruta para referência
+      return res.status(200).json({
+        profile: data,
+        rawResponse: text
+      });
+    } catch (parseError) {
+      console.error('Erro ao fazer parse do JSON:', parseError);
+      return res.status(500).json({ 
+        error: 'Erro ao processar resposta do Canva',
+        message: 'Não foi possível interpretar os dados do perfil'
+      });
+    }
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
     return res.status(500).json({ 
-      error: 'Erro ao buscar dados do perfil',
+      error: 'Falha na requisição',
       message: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }

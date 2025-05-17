@@ -61,12 +61,12 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
               <div className="flex flex-col sm:flex-row sm:items-center">
                 <span className="text-sm font-medium text-gray-500 sm:w-32">Status:</span>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 sm:mt-0 ${
-                  profile.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                  profile.status === 'A' || profile.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                 }`}>
                   <span className={`h-2 w-2 rounded-full mr-1.5 ${
-                    profile.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
+                    profile.status === 'A' || profile.status === 'active' ? 'bg-green-500' : 'bg-gray-500'
                   }`}></span>
-                  {profile.status === 'active' ? 'Ativo' : profile.status}
+                  {profile.status === 'A' || profile.status === 'active' ? 'Ativo' : profile.status}
                 </span>
               </div>
               
